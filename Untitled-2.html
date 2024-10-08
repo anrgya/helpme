@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV/Excel Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        h1 { color: #333; }
+        input[type="file"] { margin: 20px; font-size: 16px; }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+        }
+        th, td { padding: 10px; border: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Upload CSV or Excel File</h1>
+    <input type="file" id="fileInput" accept=".csv, .xlsx">
+    <table id="dataTable"></table>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            const isExcel = file.name.endsWith('.xlsx');
+
+            reader.onload = function(e) {
+                let data = isExcel ? new Uint8Array(e.target.result) : e.target.result;
+                let content = isExcel ? XLSX.utils.sheet_to_csv(XLSX.read(data, {type: 'array'}).Sheets[XLSX.read(data, {type: 'array'}).SheetNames[0]]) : data;
+                displayData(content);
+            };
+
+            if (isExcel) reader.readAsArrayBuffer(file);
+            else reader.readAsText(file);
+        });
+
+        function displayData(csv) {
+            const table = document.getElementById('dataTable');
+            table.innerHTML = '';
+            csv.split('\n').forEach((row, i) => {
+                const tr = table.insertRow(-1);
+                row.split(',').forEach(cell => {
+                    const td = i === 0 ? document.createElement('th') : tr.insertCell(-1);
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
