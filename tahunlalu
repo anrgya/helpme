@@ -1,0 +1,370 @@
+Mari kita selesaikan soal yang Anda berikan langkah demi langkah berdasarkan instruksi dari gambar yang Anda unggah. Berikut adalah panduan untuk setiap bagian soal:
+
+### Langkah 1: Persiapan Awal
+1. **Pastikan Koneksi Internet**: Pastikan Anda memiliki koneksi internet yang stabil.
+2. **Instalasi PuTTY**: Jika Anda menggunakan server di alwaysdata.net, pastikan PuTTY terinstal di komputer Anda. PuTTY akan membantu Anda mengakses server menggunakan protokol SSH.
+3. **Clone Repository**: Lakukan `git clone` dari repositori yang diberikan dengan menjalankan perintah berikut di terminal:
+   ```bash
+   git clone https://github.com/ruzcmc/alpro2tsd2023.git
+   ```
+   Ini akan mengunduh semua file yang diperlukan untuk proyek ke dalam direktori lokal Anda.
+
+### Langkah 2: Modifikasi File PHP untuk Menghasilkan JSON dari CSV
+File PHP yang kita gunakan di sini akan membaca file CSV (`datapribadi.csv`) dan mengonversinya menjadi JSON. Berikut adalah langkah-langkahnya:
+
+#### Kode PHP (`getcsv2json.php`)
+Kode ini akan membaca file CSV dan mengeluarkan data dalam format JSON.
+
+```php
+<?php
+
+function csvToJson($csvUrl) {
+    $csvData = [];
+    
+    if (($handle = fopen($csvUrl, 'r')) !== false) {
+        while (($row = fgetcsv($handle)) !== false) {
+            $csvData[] = $row;
+        }
+        fclose($handle);
+    }
+
+    // Mengambil baris pertama sebagai header
+    $headers = array_shift($csvData);
+
+    $jsonArray = [];
+
+    // Iterasi untuk setiap baris dan gabungkan dengan header
+    foreach ($csvData as $row) {
+        $jsonArrayItem = [];
+        for ($i = 0; $i < count($headers); $i++) {
+            $jsonArrayItem[$headers[$i]] = $row[$i];
+        }
+        $jsonArray[] = $jsonArrayItem;
+    }
+
+    return json_encode($jsonArray);
+}
+
+$csvUrl = 'datapribadi.csv'; // Pastikan file ini berada di direktori yang sama
+$jsonData = csvToJson($csvUrl);
+
+// Mengatur header ke JSON
+header('Content-Type: application/json');
+
+// Menampilkan data JSON
+echo $jsonData;
+?>
+```
+
+- **Cara Kerja**:
+  - Buka file `datapribadi.csv` yang berada di direktori yang sama.
+  - Konversi setiap baris CSV menjadi format JSON.
+  - Tampilkan hasil JSON pada browser.
+  
+- **Pengujian**:
+  - Upload file `getcsv2json.php` dan `datapribadi.csv` ke server alwaysdata.net.
+  - Akses `getcsv2json.php` di browser dengan URL server Anda untuk memastikan bahwa data JSON ditampilkan.
+
+### Langkah 3: Jalankan File PHP di Server
+1. **Upload File ke Server**: Gunakan PuTTY atau FTP untuk mengunggah file `getcsv2json.php` dan `datapribadi.csv` ke server Anda di alwaysdata.net.
+2. **Akses File di Browser**: Buka URL `http://yourusername.alwaysdata.net/getcsv2json.php` di browser Anda. Jika sudah benar, Anda akan melihat data dalam format JSON.
+
+### Langkah 4: Buat Halaman HTML/JavaScript untuk Menampilkan Data JSON dalam Tabel
+Langkah ini akan menampilkan data JSON yang dihasilkan oleh `getcsv2json.php` dalam tabel interaktif dengan fitur pencarian dan sorting.
+
+#### Kode HTML dan JavaScript (`index.html`)
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabel Interaktif</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h2>Tabel Data Interaktif</h2>
+    <table id="dataTable" class="display">
+        <thead>
+            <tr id="tableHeader"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            // URL ke file PHP yang menghasilkan JSON
+            const dataUrl = "http://yourusername.alwaysdata.net/getcsv2json.php";
+
+            // Mengambil data JSON
+            $.getJSON(dataUrl, function(data) {
+                if (data.length > 0) {
+                    // Membuat header tabel
+                    let headers = Object.keys(data[0]);
+                    headers.forEach(header => {
+                        $('#tableHeader').append('<th>' + header + '</th>');
+                    });
+
+                    // Memasukkan data ke dalam tabel
+                    data.forEach(row => {
+                        let rowData = '<tr>';
+                        headers.forEach(header => {
+                            rowData += '<td>' + row[header] + '</td>';
+                        });
+                        rowData += '</tr>';
+                        $('#tableBody').append(rowData);
+                    });
+
+                    // Inisialisasi DataTable
+                    $('#dataTable').DataTable();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+```
+
+- **Cara Kerja**:
+  - `$.getJSON` digunakan untuk mengambil data JSON dari `getcsv2json.php`.
+  - Tabel dibuat secara dinamis berdasarkan header dan data dari JSON.
+  - Library DataTables diinisialisasi pada tabel, menambahkan fitur pencarian dan pengurutan.
+
+- **Pengujian**:
+  - Upload file `index.html` ke server yang sama.
+  - Buka file ini di browser melalui URL server Anda (misalnya, `http://yourusername.alwaysdata.net/index.html`).
+  - Data dari file CSV sekarang akan ditampilkan dalam tabel interaktif.
+
+### Ringkasan
+1. **Kloning Repositori**: Mengunduh file proyek dari GitHub.
+2. **Modifikasi PHP**: Membuat file `getcsv2json.php` untuk mengonversi CSV ke JSON.
+3. **Jalankan di Server**: Upload dan jalankan `getcsv2json.php` di server alwaysdata.net.
+4. **Tabel Interaktif HTML/JS**: Menggunakan DataTables untuk menampilkan data JSON dalam tabel interaktif di halaman HTML.
+
+Jika ada langkah yang perlu dijelaskan lebih lanjut atau jika Anda mengalami kendala, beri tahu saya!
+
+
+
+#####################################
+
+
+
+Setelah Anda menginstal PuTTY, berikut adalah langkah-langkah untuk mengakses server menggunakan PuTTY:
+
+### 1. Buka PuTTY
+- Klik ikon PuTTY di komputer Anda untuk membuka aplikasi.
+
+### 2. Mengonfigurasi Koneksi SSH ke Server
+- Di **Host Name (or IP address)**, masukkan **nama host** atau **alamat IP** dari server Anda di alwaysdata.net. Jika Anda menggunakan alwaysdata.net, formatnya biasanya adalah `yourusername.alwaysdata.net`.
+- **Port** biasanya 22 untuk koneksi SSH.
+- **Connection type** pastikan dipilih sebagai **SSH**.
+  
+  Contoh pengaturan untuk alwaysdata.net:
+  - **Host Name**: `yourusername.alwaysdata.net`
+  - **Port**: `22`
+  - **Connection Type**: **SSH**
+
+### 3. Simpan Konfigurasi (Opsional)
+- Jika Anda sering terhubung ke server ini, Anda bisa menyimpan konfigurasi ini:
+  - Masukkan nama di kolom **Saved Sessions**.
+  - Klik **Save**.
+
+### 4. Terhubung ke Server
+- Klik **Open** untuk memulai koneksi.
+- PuTTY mungkin menampilkan peringatan keamanan tentang server yang belum pernah terhubung sebelumnya. Klik **Yes** untuk melanjutkan.
+
+### 5. Masukkan Nama Pengguna dan Kata Sandi
+- Anda akan diminta memasukkan **username** dan **password**.
+  - Username ini adalah username yang Anda buat di alwaysdata.net atau username yang diberikan.
+  - Password tidak akan terlihat saat Anda mengetiknya (tidak ada bintang atau tanda apa pun), jadi ketik dengan hati-hati.
+  
+  Misalnya:
+  ```plaintext
+  login as: yourusername
+  yourusername@yourusername.alwaysdata.net's password: (masukkan password Anda)
+  ```
+
+### 6. Navigasi di Server
+Setelah berhasil login, Anda akan melihat prompt perintah (command prompt) dari server. Dari sini, Anda bisa menjalankan berbagai perintah untuk mengelola file dan direktori di server.
+
+### 7. Upload File ke Server
+Anda memiliki beberapa opsi untuk mengunggah file ke server menggunakan PuTTY:
+
+- **Menggunakan SCP (Secure Copy Protocol)**:
+  Anda bisa menggunakan aplikasi tambahan seperti **PSCP** (PuTTY Secure Copy) yang disediakan bersama PuTTY, atau aplikasi FTP lainnya seperti FileZilla yang mendukung protokol SFTP.
+
+- **Menggunakan FTP Client seperti FileZilla**:
+  Jika Anda merasa nyaman menggunakan antarmuka grafis, gunakan aplikasi FTP client seperti FileZilla:
+  - Host: `sftp://yourusername.alwaysdata.net`
+  - Port: 22
+  - Username dan password Anda
+
+### 8. Mengelola File di Server
+- Setelah terhubung, Anda dapat menggunakan perintah Linux untuk mengelola file. Beberapa perintah dasar yang mungkin berguna:
+  - **`ls`**: Menampilkan daftar file dan direktori.
+  - **`cd <directory>`**: Berpindah ke direktori lain.
+  - **`mkdir <nama_direktori>`**: Membuat direktori baru.
+  - **`nano <nama_file>`**: Mengedit file teks.
+  - **`rm <nama_file>`**: Menghapus file.
+  - **`cp <file_asal> <file_tujuan>`**: Menyalin file.
+
+### 9. Menguji Skrip PHP
+- Navigasikan ke direktori tempat Anda mengunggah file `getcsv2json.php`.
+  ```bash
+  cd path/to/directory
+  ```
+- Pastikan file `getcsv2json.php` ada dengan perintah `ls`.
+- Buka browser dan akses `http://yourusername.alwaysdata.net/getcsv2json.php` untuk melihat hasilnya.
+
+Setelah mengakses server dan mengunggah file, Anda dapat mengelola file, menjalankan perintah, atau menguji aplikasi Anda sesuai kebutuhan. Jika Anda memiliki pertanyaan lebih lanjut tentang cara menggunakan PuTTY atau mengalami kendala, beri tahu saya!
+
+
+###############################################
+
+
+dimana saya menjlankan kode ini git clone https://github.com/ruzcmc/alpro2tsd2023.git
+
+Anda dapat menjalankan perintah `git clone` di terminal setelah Anda terhubung ke server melalui PuTTY. Berikut adalah langkah-langkahnya:
+
+### Langkah 1: Buka PuTTY dan Sambungkan ke Server
+1. **Buka PuTTY** dan masukkan detail server Anda:
+   - **Host Name**: `yourusername.alwaysdata.net`
+   - **Port**: `22`
+   - **Connection type**: SSH
+2. Klik **Open** untuk memulai koneksi.
+3. **Login** dengan nama pengguna dan kata sandi Anda di alwaysdata.net.
+
+### Langkah 2: Pindah ke Direktori yang Diinginkan (Opsional)
+Setelah terhubung, Anda berada di direktori awal (home directory) di server. Jika Anda ingin mengkloning repositori ke direktori tertentu, pindah ke direktori tersebut dengan perintah `cd`. Misalnya:
+```bash
+cd public_html
+```
+Jika Anda ingin repositori langsung di direktori home, Anda bisa langsung melanjutkan ke langkah berikutnya tanpa pindah direktori.
+
+### Langkah 3: Jalankan Perintah `git clone`
+Setelah berada di direktori tujuan, jalankan perintah `git clone` untuk mengunduh repositori:
+```bash
+git clone https://github.com/ruzcmc/alpro2tsd2023.git
+```
+
+### Langkah 4: Verifikasi Pengunduhan
+Setelah proses kloning selesai, Anda akan melihat folder baru bernama `alpro2tsd2023` di direktori tersebut. Anda bisa mengeceknya dengan perintah:
+```bash
+ls
+```
+Perintah ini akan menampilkan daftar file dan direktori yang ada, termasuk folder `alpro2tsd2023` yang baru saja Anda klon.
+
+### Langkah 5: Masuk ke Direktori Proyek
+Untuk masuk ke direktori proyek yang baru saja dikloning, gunakan perintah:
+```bash
+cd alpro2tsd2023
+```
+
+Sekarang Anda dapat melihat isi dari repositori dan mengelola file-file di dalamnya. Jika ada file PHP yang ingin Anda jalankan atau modifikasi, Anda dapat melakukannya langsung di server. Jika Anda butuh bantuan lebih lanjut mengenai file yang dikloning, beri tahu saya!
+
+
+
+####################################
+
+
+
+Ya, Anda dapat mengerjakan soal ini tanpa menggunakan server, dengan cara menjalankannya secara **lokal di komputer Anda**. Berikut adalah langkah-langkah untuk menjalankan setiap bagian soal secara lokal:
+
+### 1. Persiapan Lingkungan Lokal
+Untuk menjalankan kode PHP dan HTML/JavaScript secara lokal, Anda akan memerlukan:
+   - **XAMPP** atau **WAMP** (untuk Windows) atau **MAMP** (untuk macOS): Ini adalah paket perangkat lunak yang memungkinkan Anda menjalankan server web di komputer Anda. XAMPP/WAMP/MAMP menyertakan Apache (server web) dan PHP.
+   - **Git**: Jika Anda ingin mengkloning repositori dari GitHub.
+   
+#### Langkah untuk Menyiapkan:
+   1. **Unduh dan instal XAMPP** dari [xampp website](https://www.apachefriends.org/index.html) (atau WAMP/MAMP sesuai sistem operasi Anda).
+   2. Setelah instalasi, buka XAMPP Control Panel dan **aktifkan Apache** untuk memulai server web.
+
+### 2. Mengkloning Repositori di Direktori Lokal
+1. Buka terminal atau command prompt di komputer Anda.
+2. Navigasikan ke direktori `htdocs` di instalasi XAMPP (biasanya di `C:\xampp\htdocs` pada Windows).
+3. Di dalam direktori `htdocs`, jalankan perintah `git clone` untuk mengkloning repositori:
+   ```bash
+   git clone https://github.com/ruzcmc/alpro2tsd2023.git
+   ```
+4. Setelah kloning selesai, Anda akan melihat folder `alpro2tsd2023` di dalam `htdocs`.
+
+### 3. Modifikasi dan Jalankan File PHP secara Lokal
+1. **Pindah ke direktori proyek** di `C:\xampp\htdocs\alpro2tsd2023`.
+2. **Buka file PHP** seperti `getcsv2json.php` dan modifikasi jika diperlukan (Anda bisa menggunakan editor teks seperti VS Code, Notepad++, atau Sublime Text).
+3. **Simpan File CSV** (`datapribadi.csv`) di direktori yang sama dengan file PHP.
+
+4. Untuk **menjalankan file PHP**, buka browser dan akses URL:
+   ```
+   http://localhost/alpro2tsd2023/getcsv2json.php
+   ```
+   URL ini akan menjalankan file PHP dan menampilkan data JSON dari file CSV.
+
+### 4. Menampilkan Data JSON dalam Tabel Interaktif dengan HTML/JS
+Buat file HTML untuk menampilkan data JSON yang dihasilkan oleh `getcsv2json.php`. Simpan file ini di direktori yang sama dengan `getcsv2json.php` (misalnya, `index.html`), lalu akses melalui `http://localhost/alpro2tsd2023/index.html`.
+
+#### Contoh Kode HTML:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabel Interaktif</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h2>Tabel Data Interaktif</h2>
+    <table id="dataTable" class="display">
+        <thead>
+            <tr id="tableHeader"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            // URL lokal ke file PHP yang menghasilkan JSON
+            const dataUrl = "http://localhost/alpro2tsd2023/getcsv2json.php";
+
+            // Mengambil data JSON
+            $.getJSON(dataUrl, function(data) {
+                if (data.length > 0) {
+                    // Membuat header tabel
+                    let headers = Object.keys(data[0]);
+                    headers.forEach(header => {
+                        $('#tableHeader').append('<th>' + header + '</th>');
+                    });
+
+                    // Memasukkan data ke dalam tabel
+                    data.forEach(row => {
+                        let rowData = '<tr>';
+                        headers.forEach(header => {
+                            rowData += '<td>' + row[header] + '</td>';
+                        });
+                        rowData += '</tr>';
+                        $('#tableBody').append(rowData);
+                    });
+
+                    // Inisialisasi DataTable
+                    $('#dataTable').DataTable();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+```
+
+### 5. Mengakses File HTML di Browser
+Setelah menyiapkan file HTML dan PHP:
+- Buka browser Anda dan akses `http://localhost/alpro2tsd2023/index.html`.
+- Tabel interaktif akan menampilkan data dari `datapribadi.csv` yang dikonversi ke JSON oleh `getcsv2json.php`.
+
+### Kelebihan Menggunakan Server Lokal
+- **Pengujian Cepat**: Anda bisa langsung menguji kode tanpa perlu mengunggahnya ke server eksternal.
+- **Kendali Penuh**: Anda memiliki kontrol penuh atas konfigurasi server.
+- **Kemudahan Debugging**: Anda dapat menggunakan alat debugging yang terintegrasi dalam editor kode.
+
+Dengan langkah-langkah di atas, Anda dapat menyelesaikan soal ini tanpa menggunakan server eksternal. Jika ada kesulitan di salah satu langkah, beri tahu saya, dan saya akan membantu lebih lanjut!
